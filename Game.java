@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 import java.awt.image.*;
 import java.io.*;
@@ -15,6 +16,17 @@ public class Game extends JFrame
     private int cellSize=50;
     private int[][] gameGrid;
 
+    private int playerX = 0;
+    private int playerY = 0; 
+    private boolean playerMoving = false;
+    private boolean playerUp = false;
+    private boolean playerDown = false;
+    private boolean playerLeft = false;
+    private boolean playerRight = false;
+
+    private GameThread gameThread=null;
+    private Toolkit toolkit;
+
     private static final int NONE=0;
     private static final int WATER=2;
     private static final int PATH=3;
@@ -22,7 +34,13 @@ public class Game extends JFrame
     public Game()
     {
         super("Game");
+
+        KeyHandler kh = new KeyHandler();
+        toolkit=getToolkit();
+
         gamePanel = new GamePanel();
+        gamePanel.addKeyListener(kh);
+        gamePanel.setFocusable(true);
         gamePanel.setPreferredSize(new Dimension (gridSize*cellSize,gridSize*cellSize));
         add(gamePanel);
 
@@ -55,6 +73,32 @@ public class Game extends JFrame
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         pack();
         setVisible(true);
+
+        new GameThread().start();
+        gamePanel.requestFocus();
+    }
+
+    private void nextStep()
+    {
+        if(playerMoving)
+        {
+            if(playerUp)
+            {
+                playerY -= 10;
+            }
+            if(playerDown)
+            {
+                playerY += 10;
+            }
+            if(playerLeft)
+            {
+                playerX -= 10;
+            }
+            if(playerRight)
+            {
+                playerX += 10;
+            }
+        }
     }
 
     private class GamePanel extends JPanel
@@ -82,10 +126,69 @@ public class Game extends JFrame
             {
                 g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
             }
-            g.drawImage(playerBI,0,0,null);
+            g.drawImage(playerBI,playerX,playerY,null);
+        }
+    }
+    private class GameThread extends Thread
+    {
+        public void run()
+        {
+            try
+            {
+                while(true)
+                {
+                    sleep(20);
+                    nextStep();
+                    gamePanel.repaint();
+                    toolkit.sync();
+                }
+            }
+            catch(InterruptedException ie)
+            {}
         }
     }
 
+    private class KeyHandler extends KeyAdapter
+    {
+        public void keyPressed(KeyEvent e)
+        {
+            if(e.getKeyCode()==KeyEvent.VK_W)
+            {
+                playerMoving = true;
+                playerUp = true;
+            }
+            else if(e.getKeyCode()==KeyEvent.VK_S)
+            {
+                playerMoving = true;
+                playerDown = true;
+            }
+            else if(e.getKeyCode()==KeyEvent.VK_A)
+            {
+                playerMoving = true;
+                playerLeft = true;
+            }
+            else if(e.getKeyCode()==KeyEvent.VK_D)
+            {
+                playerMoving = true;
+                playerRight = true;
+            }
+        }
+        public void keyReleased(KeyEvent e)
+        {
+            if(e.getKeyCode()==KeyEvent.VK_W)
+                playerUp = false;
+            else if(e.getKeyCode()==KeyEvent.VK_S)
+                playerDown = false;
+            else if(e.getKeyCode()==KeyEvent.VK_A)
+                playerLeft = false;
+            else if(e.getKeyCode()==KeyEvent.VK_D)
+                playerRight = false;
+
+            if(!playerUp && !playerDown && !playerLeft && !playerRight)
+                playerMoving = false;
+        }
+    }
+    
     public static void main(String[] args)
     {
         new Game();
