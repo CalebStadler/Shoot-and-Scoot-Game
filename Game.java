@@ -16,8 +16,8 @@ public class Game extends JFrame
     private int cellSize=50;
     private int[][] gameGrid;
 
-    private int playerX = 0;
-    private int playerY = 0; 
+    private int playerX = (gridSize*cellSize)/2;
+    private int playerY = (gridSize*cellSize)/2; 
     private boolean playerMoving = false;
     private boolean playerUp = false;
     private boolean playerDown = false;
@@ -85,18 +85,26 @@ public class Game extends JFrame
             if(playerUp)
             {
                 playerY -= 10;
+                if(gameGrid[playerY/cellSize][playerX/cellSize] == NONE)
+                    playerY +=10;
             }
             if(playerDown)
             {
                 playerY += 10;
+                if(gameGrid[(playerY+25)/cellSize][playerX/cellSize] == NONE)
+                    playerY -=10;
             }
             if(playerLeft)
             {
                 playerX -= 10;
+                if(gameGrid[playerY/cellSize][playerX/cellSize] == NONE)
+                    playerX +=10;
             }
             if(playerRight)
             {
                 playerX += 10;
+                if(gameGrid[playerY/cellSize][(playerX+25)/cellSize] == NONE)
+                    playerX -=10;
             }
         }
     }
