@@ -212,13 +212,13 @@ public class Game extends JFrame
                 {
                     if(!playerMoving && !shooting)
                     {
-                        projectileList.add(new Projectile(playerX, playerY, 15,true,
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 15,true,
                             playerDown,playerLeft,playerRight));
                         shooting = true;
                     }
                     else if(!shooting)
                     {
-                        projectileList.add(new Projectile(playerX, playerY, 15,playerUp,
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 15,playerUp,
                             playerDown,playerLeft,playerRight));
                         shooting = true;
                     }
