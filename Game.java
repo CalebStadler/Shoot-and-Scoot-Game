@@ -10,12 +10,12 @@ public class Game extends JFrame
 {
     private GamePanel gamePanel;
     private BufferedImage[] bia;
-    private BufferedImage playerBI;
     
     private int gridSize=18;
     private int cellSize=50;
     private int[][] gameGrid;
 
+    private BufferedImage playerBI;
     private int playerX = (gridSize*cellSize)/2;
     private int playerY = (gridSize*cellSize)/2; 
     private boolean playerMoving = false;
@@ -24,12 +24,16 @@ public class Game extends JFrame
     private boolean playerLeft = false;
     private boolean playerRight = false;
 
-    private GameThread gameThread=null;
     private Toolkit toolkit;
 
     private static final int NONE=0;
     private static final int WATER=2;
     private static final int PATH=3;
+
+    private BufferedImage[] projectileBIA;
+    private ArrayList<Projectile> projectileList;
+    private boolean shooting = false;
+    private static final int SMALL=1;
 
     public Game()
     {
@@ -46,9 +50,15 @@ public class Game extends JFrame
 
         gameGrid=new int[gridSize][gridSize];
         bia = new BufferedImage[4]; 
+        
+        projectileList = new ArrayList<Projectile>();
+        projectileBIA = new BufferedImage[4];
         try
         {
             playerBI = ImageIO.read(new File("player.png"));
+
+            projectileBIA[SMALL] = ImageIO.read(new File("smallBall.png"));
+
             bia[WATER]=ImageIO.read(new File("water01.png"));
             bia[PATH]=ImageIO.read(new File("path01.png"));
             
@@ -134,6 +144,11 @@ public class Game extends JFrame
             {
                 g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
             }
+            for(int i = 0; i < projectileList.size(); i++)
+            {
+                Projectile p = projectileList.get(i);
+                g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
+            }
             g.drawImage(playerBI,playerX,playerY,null);
         }
     }
@@ -147,6 +162,17 @@ public class Game extends JFrame
                 {
                     sleep(20);
                     nextStep();
+                    synchronized(projectileList)
+                    {
+                        for(int i = 0; i < projectileList.size(); i++)
+                        {
+                            Projectile p = projectileList.get(i);
+                            if(gameGrid[p.getY()/cellSize][p.getX()/cellSize] != NONE)
+                                p.move();
+                            else
+                                projectileList.remove(i);    
+                        }
+                    }
                     gamePanel.repaint();
                     toolkit.sync();
                 }
@@ -160,40 +186,61 @@ public class Game extends JFrame
     {
         public void keyPressed(KeyEvent e)
         {
-            if(e.getKeyCode()==KeyEvent.VK_W)
+            if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
             {
                 playerMoving = true;
                 playerUp = true;
             }
-            else if(e.getKeyCode()==KeyEvent.VK_S)
+            else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
             {
                 playerMoving = true;
                 playerDown = true;
             }
-            else if(e.getKeyCode()==KeyEvent.VK_A)
+            else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
             {
                 playerMoving = true;
                 playerLeft = true;
             }
-            else if(e.getKeyCode()==KeyEvent.VK_D)
+            else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
             {
                 playerMoving = true;
                 playerRight = true;
             }
+            if(e.getKeyCode()==KeyEvent.VK_SPACE)
+            {
+                synchronized(projectileList)
+                {
+                    if(!playerMoving && !shooting)
+                    {
+                        projectileList.add(new Projectile(playerX, playerY, 15,true,
+                            playerDown,playerLeft,playerRight));
+                        shooting = true;
+                    }
+                    else if(!shooting)
+                    {
+                        projectileList.add(new Projectile(playerX, playerY, 15,playerUp,
+                            playerDown,playerLeft,playerRight));
+                        shooting = true;
+                    }
+                }
+            }
         }
         public void keyReleased(KeyEvent e)
         {
-            if(e.getKeyCode()==KeyEvent.VK_W)
+            if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
                 playerUp = false;
-            else if(e.getKeyCode()==KeyEvent.VK_S)
+            else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
                 playerDown = false;
-            else if(e.getKeyCode()==KeyEvent.VK_A)
+            else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
                 playerLeft = false;
-            else if(e.getKeyCode()==KeyEvent.VK_D)
+            else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
                 playerRight = false;
 
             if(!playerUp && !playerDown && !playerLeft && !playerRight)
                 playerMoving = false;
+
+            if(e.getKeyCode()==KeyEvent.VK_SPACE)
+                shooting = false;
         }
     }
     
