@@ -23,6 +23,7 @@ public class Game extends JFrame
     private boolean playerDown = false;
     private boolean playerLeft = false;
     private boolean playerRight = false;
+    private int lastDir = 0;
 
     private Toolkit toolkit;
 
@@ -160,7 +161,7 @@ public class Game extends JFrame
             {
                 while(true)
                 {
-                    sleep(20);
+                    sleep(15);
                     nextStep();
                     synchronized(projectileList)
                     {
@@ -212,13 +213,15 @@ public class Game extends JFrame
                 {
                     if(!playerMoving && !shooting)
                     {
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 15,true,
-                            playerDown,playerLeft,playerRight));
+                        boolean[] a = new boolean [4];
+                        a[lastDir] = true;
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 12,a[0],
+                            a[1],a[2],a[3]));
                         shooting = true;
                     }
                     else if(!shooting)
                     {
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 15,playerUp,
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 12,playerUp,
                             playerDown,playerLeft,playerRight));
                         shooting = true;
                     }
@@ -228,13 +231,29 @@ public class Game extends JFrame
         public void keyReleased(KeyEvent e)
         {
             if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+            {
                 playerUp = false;
+                if(!playerDown && !playerLeft && !playerRight)
+                    lastDir = 0;
+            }
             else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
+            {
                 playerDown = false;
+                if(!playerUp && !playerLeft && !playerRight)
+                    lastDir = 1;
+            }
             else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
+            {
                 playerLeft = false;
+                if(!playerDown && !playerUp && !playerRight)
+                    lastDir = 2;
+            }
             else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
+            {
                 playerRight = false;
+                if(!playerDown && !playerLeft && !playerUp)
+                    lastDir = 3;
+            }
 
             if(!playerUp && !playerDown && !playerLeft && !playerRight)
                 playerMoving = false;
