@@ -8,13 +8,16 @@ import java.util.*;
 
 public class Game extends JFrame
 {
+    //gamePanel and bia for the grid
     private GamePanel gamePanel;
     private BufferedImage[] bia;
     
+    //grid used in creation for the game area
     private int gridSize=18;
     private int cellSize=50;
     private int[][] gameGrid;
 
+    //variables needed for the player
     private BufferedImage playerBI;
     private int playerX = (gridSize*cellSize)/2;
     private int playerY = (gridSize*cellSize)/2; 
@@ -27,10 +30,12 @@ public class Game extends JFrame
 
     private Toolkit toolkit;
 
+    //static constants for the game area
     private static final int NONE=0;
     private static final int WATER=2;
     private static final int PATH=3;
 
+    //variables needed for the projectiles
     private BufferedImage[] projectileBIA;
     private ArrayList<Projectile> projectileList;
     private boolean shooting = false;
@@ -43,17 +48,22 @@ public class Game extends JFrame
         KeyHandler kh = new KeyHandler();
         toolkit=getToolkit();
 
+        //gamePanel
         gamePanel = new GamePanel();
         gamePanel.addKeyListener(kh);
         gamePanel.setFocusable(true);
         gamePanel.setPreferredSize(new Dimension (gridSize*cellSize,gridSize*cellSize));
         add(gamePanel);
 
+        //creation of game grid and buffered image array
         gameGrid=new int[gridSize][gridSize];
         bia = new BufferedImage[4]; 
         
+        //creation of projectile list and buffered image array
         projectileList = new ArrayList<Projectile>();
         projectileBIA = new BufferedImage[4];
+        
+        //take in all of the files needed for the game
         try
         {
             playerBI = ImageIO.read(new File("player.png"));
@@ -63,6 +73,7 @@ public class Game extends JFrame
             bia[WATER]=ImageIO.read(new File("water01.png"));
             bia[PATH]=ImageIO.read(new File("path01.png"));
             
+            //creation of the game area
             Scanner in = new Scanner(new File ("game01.txt"));
             String line = "";
             for(int i = 0; i < gridSize; i++)
@@ -89,6 +100,7 @@ public class Game extends JFrame
         gamePanel.requestFocus();
     }
 
+    //movement for the player within the bounds of the play area
     private void nextStep()
     {
         if(playerMoving)
@@ -127,6 +139,7 @@ public class Game extends JFrame
             super.paintComponent(g);
             g.setColor(Color.BLACK);
             g.fillRect(0,0,getWidth(),getHeight());
+            //paint the game area
             for(int i=0;i<gridSize;i++)
             {
                 for(int j=0;j<gridSize;j++)
@@ -136,6 +149,7 @@ public class Game extends JFrame
                     g.drawImage(bia[gameGrid[i][j]],j*cellSize,i*cellSize,null);
                 }
             }
+            //gridlines
             g.setColor(new Color(25,25,25));
             for(int i=0;i<=gridSize;i++)
             {
@@ -145,11 +159,13 @@ public class Game extends JFrame
             {
                 g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
             }
+            //projectiles
             for(int i = 0; i < projectileList.size(); i++)
             {
                 Projectile p = projectileList.get(i);
                 g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
             }
+            //player
             g.drawImage(playerBI,playerX,playerY,null);
         }
     }
@@ -159,10 +175,13 @@ public class Game extends JFrame
         {
             try
             {
+                //always running
                 while(true)
                 {
                     sleep(15);
+                    //move the player
                     nextStep();
+                    //move the projectiles and remove them when the reach edge of play area
                     synchronized(projectileList)
                     {
                         for(int i = 0; i < projectileList.size(); i++)
@@ -187,6 +206,8 @@ public class Game extends JFrame
     {
         public void keyPressed(KeyEvent e)
         {
+            //WASD movement or arrow keys
+            //set boolean variables for direction
             if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
             {
                 playerMoving = true;
@@ -207,10 +228,12 @@ public class Game extends JFrame
                 playerMoving = true;
                 playerRight = true;
             }
+            //shoot projectiles
             if(e.getKeyCode()==KeyEvent.VK_SPACE)
             {
                 synchronized(projectileList)
                 {
+                    //default direction of shooting to where the player was last moving
                     if(!playerMoving && !shooting)
                     {
                         boolean[] a = new boolean [4];
@@ -219,6 +242,7 @@ public class Game extends JFrame
                             a[1],a[2],a[3]));
                         shooting = true;
                     }
+                    //shoot to the direction the player is moving
                     else if(!shooting)
                     {
                         projectileList.add(new Projectile(playerX+10, playerY+10, 12,playerUp,
@@ -230,6 +254,7 @@ public class Game extends JFrame
         }
         public void keyReleased(KeyEvent e)
         {
+            //reset the boolean variables and keep track of last direction
             if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
             {
                 playerUp = false;
@@ -254,15 +279,15 @@ public class Game extends JFrame
                 if(!playerDown && !playerLeft && !playerUp)
                     lastDir = 3;
             }
-
             if(!playerUp && !playerDown && !playerLeft && !playerRight)
                 playerMoving = false;
-
+            //set shooting false to prevent spam shooting
             if(e.getKeyCode()==KeyEvent.VK_SPACE)
                 shooting = false;
         }
     }
     
+    //run the game
     public static void main(String[] args)
     {
         new Game();
