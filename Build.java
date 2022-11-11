@@ -21,8 +21,8 @@ public class Build extends JFrame
   private static final int ENEMY=1;
   private static final int WATER=2;
   private static final int PATH=3;
-  private static final int SOLID_BRICK=4;
-  private static final int LADDER=5;
+  private static final int NEXT_LEVEL=4;
+  private static final int START=5;
   private static final int WIRE=6;
   private static final int GOLD=7;
   private static final int MAX=8;
@@ -124,17 +124,18 @@ g.drawRect(0,k*cellSize,cellSize,cellSize);
     statusPanel.add(statusLabel);
 
     gameGrid=new int[gridSize][gridSize];
-    //loadGameFile(new File("ladders01.txt"));
+    loadGameFile(new File("game01.txt"));
     bia=new BufferedImage[9];
     try
     {
       bia[ENEMY]=ImageIO.read(new File("enemy.png"));
-      //bia[WATER]=ImageIO.read(new File("water01.png"));
+      bia[WATER]=ImageIO.read(new File("water01.png"));
       bia[PATH]=ImageIO.read(new File("path01.png"));
-      bia[SOLID_BRICK]=ImageIO.read(new File("solidbrick.png"));
-      bia[LADDER]=ImageIO.read(new File("ladder.png"));
-      bia[WIRE]=ImageIO.read(new File("wire.png"));
-      bia[GOLD]=ImageIO.read(new File("gold.png"));
+      bia[NEXT_LEVEL]=ImageIO.read(new File("nextLevel.png"));
+      bia[START]=ImageIO.read(new File("start.png"));
+      //bia[LADDER]=ImageIO.read(new File("ladder.png"));
+      //bia[WIRE]=ImageIO.read(new File("wire.png"));
+      //bia[GOLD]=ImageIO.read(new File("gold.png"));
     }
     catch(IOException ioe)
     {
@@ -209,7 +210,7 @@ g.drawRect(0,k*cellSize,cellSize,cellSize);
       }
       else if(e.getSource()==fileSaveItem)
       {
-        saveGameFile(new File("game01.txt"));
+        saveGameFile(new File("game02.txt"));
       }
     }
   }
