@@ -18,7 +18,7 @@ public class Build extends JFrame
   private JButton newButton;
   private JLabel statusLabel;
   private static final int NONE=0;
-  private static final int HOLE=1;
+  private static final int ENEMY=1;
   private static final int WATER=2;
   private static final int PATH=3;
   private static final int SOLID_BRICK=4;
@@ -128,7 +128,8 @@ g.drawRect(0,k*cellSize,cellSize,cellSize);
     bia=new BufferedImage[9];
     try
     {
-      bia[WATER]=ImageIO.read(new File("water01.png"));
+      bia[ENEMY]=ImageIO.read(new File("enemy.png"));
+      //bia[WATER]=ImageIO.read(new File("water01.png"));
       bia[PATH]=ImageIO.read(new File("path01.png"));
       bia[SOLID_BRICK]=ImageIO.read(new File("solidbrick.png"));
       bia[LADDER]=ImageIO.read(new File("ladder.png"));

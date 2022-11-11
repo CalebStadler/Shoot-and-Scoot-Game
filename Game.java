@@ -28,10 +28,14 @@ public class Game extends JFrame
     private boolean playerRight = false;
     private int lastDir = 0;
 
+    //variables needed for the enemies
+    private ArrayList<Enemy> enemyList;
+    
     private Toolkit toolkit;
 
     //static constants for the game area
     private static final int NONE=0;
+    private static final int ENEMY=1;
     private static final int WATER=2;
     private static final int PATH=3;
 
@@ -63,13 +67,37 @@ public class Game extends JFrame
         projectileList = new ArrayList<Projectile>();
         projectileBIA = new BufferedImage[4];
         
+        //creation of enemy list
+        enemyList = new ArrayList<Enemy>();
+
         //take in all of the files needed for the game
         try
         {
             playerBI = ImageIO.read(new File("player.png"));
-
             projectileBIA[SMALL] = ImageIO.read(new File("smallBall.png"));
+        }
+        catch(IOException ioe)
+        {
+            System.out.println(ioe);
+        }
+        //creates starting level
+        createLevel();
 
+        setResizable(false);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        pack();
+        setVisible(true);
+
+        new GameThread().start();
+        gamePanel.requestFocus();
+    }
+    //creates each level
+    private void createLevel()
+    {
+        //take in all of the files needed for the game
+        try
+        {
+            bia[ENEMY]=ImageIO.read(new File("enemy.png"));
             bia[WATER]=ImageIO.read(new File("water01.png"));
             bia[PATH]=ImageIO.read(new File("path01.png"));
             
@@ -83,6 +111,11 @@ public class Game extends JFrame
                 for(int j=0;j<gridSize;j++)
                 {
                     gameGrid[i][j]=Integer.parseInt(sa[j]);
+                    if(Integer.parseInt(sa[j]) == ENEMY)
+                    {
+                        Enemy e = new Enemy(i,j,10, 0);
+                        enemyList.add(e);
+                    }
                 }
             }
         }
@@ -90,16 +123,7 @@ public class Game extends JFrame
         {
             System.out.println(ioe);
         }
-
-        setResizable(false);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        pack();
-        setVisible(true);
-
-        new GameThread().start();
-        gamePanel.requestFocus();
     }
-
     //movement for the player within the bounds of the play area
     private void nextStep()
     {
@@ -107,27 +131,43 @@ public class Game extends JFrame
         {
             if(playerUp)
             {
-                playerY -= 10;
-                if(gameGrid[playerY/cellSize][playerX/cellSize] == NONE)
-                    playerY +=10;
+                playerY -= 7;
+                //collision with walls and enemies
+                if(gameGrid[playerY/cellSize][(playerX+25)/cellSize] == NONE ||
+                    gameGrid[playerY/cellSize][playerX/cellSize] == NONE ||
+                    gameGrid[playerY/cellSize][(playerX+25)/cellSize] == ENEMY ||
+                    gameGrid[playerY/cellSize][playerX/cellSize] == ENEMY)
+                    playerY +=7;
             }
             if(playerDown)
             {
-                playerY += 10;
-                if(gameGrid[(playerY+25)/cellSize][playerX/cellSize] == NONE)
-                    playerY -=10;
+                playerY += 7;
+                //collision with walls and enemies
+                if(gameGrid[(playerY+25)/cellSize][(playerX+25)/cellSize] == NONE ||
+                    gameGrid[(playerY+25)/cellSize][playerX/cellSize] == NONE ||
+                    gameGrid[(playerY+25)/cellSize][(playerX+25)/cellSize] == ENEMY ||
+                    gameGrid[(playerY+25)/cellSize][playerX/cellSize] == ENEMY )
+                    playerY -=7;
             }
             if(playerLeft)
             {
-                playerX -= 10;
-                if(gameGrid[playerY/cellSize][playerX/cellSize] == NONE)
-                    playerX +=10;
+                playerX -= 7;
+                //collision with walls and enemies
+                if(gameGrid[(playerY+25)/cellSize][playerX/cellSize] == NONE ||
+                    gameGrid[playerY/cellSize][playerX/cellSize] == NONE ||
+                    gameGrid[(playerY+25)/cellSize][playerX/cellSize] == ENEMY ||
+                    gameGrid[playerY/cellSize][playerX/cellSize] == ENEMY)
+                    playerX +=7;
             }
             if(playerRight)
             {
-                playerX += 10;
-                if(gameGrid[playerY/cellSize][(playerX+25)/cellSize] == NONE)
-                    playerX -=10;
+                playerX += 7;
+                //collision with walls and enemies
+                if(gameGrid[(playerY+25)/cellSize][(playerX+25)/cellSize] == NONE ||
+                    gameGrid[playerY/cellSize][(playerX+25)/cellSize] == NONE ||
+                    gameGrid[(playerY+25)/cellSize][(playerX+25)/cellSize] == ENEMY ||
+                    gameGrid[playerY/cellSize][(playerX+25)/cellSize] == ENEMY)
+                    playerX -=7;
             }
         }
     }
@@ -187,8 +227,23 @@ public class Game extends JFrame
                         for(int i = 0; i < projectileList.size(); i++)
                         {
                             Projectile p = projectileList.get(i);
-                            if(gameGrid[p.getY()/cellSize][p.getX()/cellSize] != NONE)
+                            if(gameGrid[p.getY()/cellSize][p.getX()/cellSize] != NONE && 
+                                gameGrid[p.getY()/cellSize][p.getX()/cellSize] != ENEMY)
                                 p.move();
+                            else if(gameGrid[p.getY()/cellSize][p.getX()/cellSize] == ENEMY)
+                            {
+                                for(int j = 0; j < enemyList.size();j++)
+                                {
+                                    if(p.getY()/cellSize == enemyList.get(j).getRow() && 
+                                    p.getX()/cellSize == enemyList.get(j).getColumn())
+                                    {
+                                        projectileList.remove(i);
+                                        enemyList.get(j).decrementHP();
+                                        if(enemyList.get(j).getHP() == 0)
+                                            gameGrid[p.getY()/cellSize][p.getX()/cellSize] = PATH;
+                                    }
+                                }
+                            }
                             else
                                 projectileList.remove(i);    
                         }
@@ -238,14 +293,14 @@ public class Game extends JFrame
                     {
                         boolean[] a = new boolean [4];
                         a[lastDir] = true;
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 12,a[0],
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 10,a[0],
                             a[1],a[2],a[3]));
                         shooting = true;
                     }
                     //shoot to the direction the player is moving
                     else if(!shooting)
                     {
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 12,playerUp,
+                        projectileList.add(new Projectile(playerX+10, playerY+10, 10,playerUp,
                             playerDown,playerLeft,playerRight));
                         shooting = true;
                     }
