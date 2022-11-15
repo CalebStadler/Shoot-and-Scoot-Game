@@ -53,6 +53,8 @@ public class Game extends JFrame
     private static final int PATH=3;
     private static final int NEXT_LEVEL=4;
     private static final int START=5;
+    private static final int TRIPLE=6;
+    private static final int GOLD=7;
 
     //variables for controlling the levels
     private String[] levels;
@@ -67,6 +69,12 @@ public class Game extends JFrame
     private ArrayList<Projectile> projectileList;
     private boolean shooting = false;
     private static final int SMALL=1;
+
+    //variables for powerups
+    private boolean tripleP = false;
+
+    //variables for gold
+    private int gold = 0;
 
     public Game()
     {
@@ -88,10 +96,10 @@ public class Game extends JFrame
 
         //creation of game grid and buffered image array
         gameGrid=new int[gridSize][gridSize];
-        bia = new BufferedImage[6]; 
+        bia = new BufferedImage[8]; 
 
         //array for the level files
-        levels = new String[4];
+        levels = new String[5];
         for (int i = 0; i < levels.length; i++)
         {
             levels[i] = "Levels/game" + (i+1) + ".txt";
@@ -148,6 +156,8 @@ public class Game extends JFrame
             bia[PATH]=ImageIO.read(new File("Images/path.png"));
             bia[NEXT_LEVEL]=ImageIO.read(new File("Images/nextLevel.png"));
             bia[START]=ImageIO.read(new File("Images/start.png"));
+            bia[TRIPLE]=ImageIO.read(new File("Images/tripleShot.png"));
+            bia[GOLD]=ImageIO.read(new File("Images/gold.png"));
             
             //creation of the game area
             Scanner in = new Scanner(new File (levels[currLevel]));
@@ -167,6 +177,14 @@ public class Game extends JFrame
                     {
                         playerX = j * cellSize;
                         playerY = i * cellSize;
+                    }
+                    if(Integer.parseInt(sa[j]) == TRIPLE && tripleP)
+                    {
+                        gameGrid[i][j] = PATH;
+                    }
+                    if(Integer.parseInt(sa[j]) == GOLD && levelComplete)
+                    {
+                        gameGrid[i][j] = PATH;
                     }
                     //if ENEMY square create an enemy object
                     if(Integer.parseInt(sa[j]) == ENEMY && !levelComplete)
@@ -253,7 +271,7 @@ public class Game extends JFrame
                     gameGrid[playerY/cellSize][(playerX+25)/cellSize] == WATER)
                     playerX -=7;
             }
-            //if the player is in the NEX_LEVEL area change levels or end game
+            //if the player is in the NEXt_LEVEL area change levels or end game
             if(gameGrid[playerY/cellSize][playerX/cellSize] == NEXT_LEVEL)
             {
                 currLevel++;
@@ -270,6 +288,16 @@ public class Game extends JFrame
                     levelComplete = false;
                     createLevel();
                 }
+            }
+            if(gameGrid[playerY/cellSize][playerX/cellSize] == TRIPLE)
+            {
+                tripleP = true;
+                gameGrid[playerY/cellSize][playerX/cellSize] = PATH;
+            }
+            if(gameGrid[playerY/cellSize][playerX/cellSize] == GOLD)
+            {
+                gold++;
+                gameGrid[playerY/cellSize][playerX/cellSize] = PATH;
             }
         }
     }
@@ -391,7 +419,8 @@ public class Game extends JFrame
                 g.setColor(Color.WHITE);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 30));
                 g.drawString("Level: " + (currLevel + 1),330,35);  
-                g.drawString("Lives: " + (lives),470,35);     
+                g.drawString("Lives: " + lives,470,35);   
+                g.drawString("Gold: " + gold, 610,35);  
             }
         }
     }
@@ -595,6 +624,13 @@ public class Game extends JFrame
                         {
                             boolean[] a = new boolean [4];
                             a[lastDir] = true;
+                            if(tripleP)
+                            {
+                                projectileList.add(new Projectile(playerX, playerY, 10,a[0],
+                                    a[1],a[2],a[3]));
+                                projectileList.add(new Projectile(playerX-10, playerY-10, 10,a[0],
+                                    a[1],a[2],a[3]));
+                            }
                             projectileList.add(new Projectile(playerX+10, playerY+10, 10,a[0],
                                 a[1],a[2],a[3]));
                             shooting = true;
@@ -602,6 +638,13 @@ public class Game extends JFrame
                         //shoot to the direction the player is moving
                         else if(!shooting)
                         {
+                            if(tripleP)
+                            {
+                                projectileList.add(new Projectile(playerX, playerY, 10, playerUp,
+                                    playerDown,playerLeft,playerRight));
+                                projectileList.add(new Projectile(playerX-10, playerY-10, 10,playerUp,
+                                    playerDown,playerLeft,playerRight));
+                            }
                             projectileList.add(new Projectile(playerX+10, playerY+10, 10,playerUp,
                                 playerDown,playerLeft,playerRight));
                             shooting = true;
