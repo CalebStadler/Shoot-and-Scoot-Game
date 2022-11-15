@@ -37,6 +37,7 @@ public class Game extends JFrame
     private boolean playerRight = false;
     private int lastDir = 0;
     private int playerHP = 10;
+    private int lives = 3;
 
     //variables needed for the enemies
     private ArrayList<Enemy> enemyList;
@@ -93,7 +94,7 @@ public class Game extends JFrame
         levels = new String[4];
         for (int i = 0; i < levels.length; i++)
         {
-            levels[i] = "game" + (i+1) + ".txt";
+            levels[i] = "Levels/game" + (i+1) + ".txt";
         }
         
         //creation of projectile list and buffered image array
@@ -107,8 +108,8 @@ public class Game extends JFrame
         //take in all of the files needed for the game
         try
         {
-            playerBI = ImageIO.read(new File("player.png"));
-            projectileBIA[SMALL] = ImageIO.read(new File("smallBall.png"));
+            playerBI = ImageIO.read(new File("Images/player.png"));
+            projectileBIA[SMALL] = ImageIO.read(new File("Images/smallBall.png"));
         }
         catch(IOException ioe)
         {
@@ -128,7 +129,7 @@ public class Game extends JFrame
     private void resetGame()
     {
         //reset all variables
-        currLevel = 0; playerHP = 10;
+        currLevel = 0; playerHP = 10; lives = 3;
         levelComplete = false;
         playerUp = false; playerDown = false; playerLeft = false; playerRight = false; 
         lastDir = 0; playerMoving = false;
@@ -142,11 +143,11 @@ public class Game extends JFrame
         //take in all of the files needed for the game
         try
         {
-            bia[ENEMY]=ImageIO.read(new File("enemy.png"));
-            bia[WATER]=ImageIO.read(new File("water01.png"));
-            bia[PATH]=ImageIO.read(new File("path01.png"));
-            bia[NEXT_LEVEL]=ImageIO.read(new File("nextLevel.png"));
-            bia[START]=ImageIO.read(new File("start.png"));
+            bia[ENEMY]=ImageIO.read(new File("Images/enemy.png"));
+            bia[WATER]=ImageIO.read(new File("Images/water.png"));
+            bia[PATH]=ImageIO.read(new File("Images/path.png"));
+            bia[NEXT_LEVEL]=ImageIO.read(new File("Images/nextLevel.png"));
+            bia[START]=ImageIO.read(new File("Images/start.png"));
             
             //creation of the game area
             Scanner in = new Scanner(new File (levels[currLevel]));
@@ -386,10 +387,11 @@ public class Game extends JFrame
                 //player HP
                 g.drawString("" + playerHP, playerX+6, playerY+20);
 
-                //draw level on screen
+                //draw level on screen and number of lives left
                 g.setColor(Color.WHITE);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 30));
-                g.drawString("Level: " + (currLevel + 1),395,35);     
+                g.drawString("Level: " + (currLevel + 1),330,35);  
+                g.drawString("Lives: " + (lives),470,35);     
             }
         }
     }
@@ -489,9 +491,15 @@ public class Game extends JFrame
                     //if play has no HP, lose
                     if (playerHP <= 0)
                     {
-                        running = false;
-                        view = LOSER;
-                        resetGame();
+                        lives--;
+                        if(lives == 0)
+                        {
+                            running = false;
+                            view = LOSER;
+                            resetGame();
+                        }
+                        else 
+                            playerHP = 10;
                     }
                     gamePanel.repaint();
                     toolkit.sync();
