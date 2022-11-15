@@ -8,6 +8,15 @@ import java.util.*;
 
 public class Game extends JFrame
 {
+    //views
+    private static final int MAIN = 0;
+    private static final int PLAYING = 1;
+    private static final int RULES = 2;
+    private static final int HIGHSCORE = 3;
+    private static final int WINNER = 4;
+    private static final int LOSER = 5;
+    private int view = 0;
+
     //gamePanel and bia for the grid
     private GamePanel gamePanel;
     private BufferedImage[] bia;
@@ -113,8 +122,6 @@ public class Game extends JFrame
         pack();
         setVisible(true);
 
-        running = true;
-        new GameThread().start();
         gamePanel.requestFocus();
     }
     //resets the game back to the initial state
@@ -239,11 +246,12 @@ public class Game extends JFrame
             //if the player is in the NEX_LEVEL area change levels or end game
             if(gameGrid[playerY/cellSize][playerX/cellSize] == NEXT_LEVEL)
             {
+                currLevel++;
                 //if final level end game
                 if(currLevel >= levels.length)
                 {
                     running = false;
-                    JOptionPane.showMessageDialog(null,"Game Over!\nYou Win!", "Winner!", JOptionPane.INFORMATION_MESSAGE);
+                    view = WINNER;
                     resetGame();
                 }
                 //else move to next level
@@ -263,49 +271,117 @@ public class Game extends JFrame
             super.paintComponent(g);
             g.setColor(Color.BLACK);
             g.fillRect(0,0,getWidth(),getHeight());
-            //paint the game area
-            for(int i=0;i<gridSize;i++)
+            //Main Menu view
+            if(view == MAIN)
             {
-                for(int j=0;j<gridSize;j++)
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 100));
+                g.drawString("Shoot & Scoot",100,100);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
+                g.drawString("Press P to play",250,300);
+                g.drawString("Press R to bring up the rules",100,400);
+                g.drawString("Press H to bring up the highscores",30,500);
+            }
+            //Rules view
+            else if(view == RULES)
+            {
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
+                g.drawString("Rules",350,100);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
+                g.drawString("1. Use WASD or the arrow keys to move.",50,200);
+                g.drawString("2. Shoot with the spacebar.",50,260);
+                g.drawString("3. Defeat the enemies to move on to next level.",50,320);
+                g.drawString("4. Enemies get harder as you progress.",50,380);
+                g.drawString("5. Orange zones are safe zones, cannot shoot nor be shot.",50,440);
+                g.drawString("6. Blue zones are water, can be shot over, but not moved over.",50,500);
+                g.drawString("7. Yellow zones are used to move to the next level.",50,560);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
+                g.drawString("Press B to go back to main menu",50,700);
+            }
+            //Highscore view
+            else if(view == HIGHSCORE)
+            {
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
+                g.drawString("Highscores",250,100);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
+                g.drawString("Press B to go back to main menu",50,700);
+            }
+            //Winner view
+            else if(view == WINNER)
+            {
+                g.setColor(Color.RED);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
+                g.drawString("WINNER",290,450);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
+                g.drawString("Press R to restart",325,500);
+                g.drawString("Press M for main menu",300,550);
+            }
+            //Loser view
+            else if (view == LOSER)
+            {
+                g.setColor(Color.RED);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
+                g.drawString("YOU ARE DEAD",165,450);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
+                g.drawString("Press R to restart",325,500);
+                g.drawString("Press M for main menu",300,550);
+            }
+            //Play view
+            else if(view == PLAYING)
+            {
+                //paint the game area
+                for(int i=0;i<gridSize;i++)
                 {
-                    if(gameGrid[i][j]<1) continue;
-                    g.drawImage(bia[gameGrid[i][j]],j*cellSize,i*cellSize,null);
-                    if (gameGrid[i][j] == ENEMY)
+                    for(int j=0;j<gridSize;j++)
                     {
-                        g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 20));
-                        for(int k = 0; k < enemyList.size(); k ++)
+                        if(gameGrid[i][j]<1) continue;
+                        g.drawImage(bia[gameGrid[i][j]],j*cellSize,i*cellSize,null);
+                        if (gameGrid[i][j] == ENEMY)
                         {
-                            if(enemyList.get(k).getRow() == i && enemyList.get(k).getColumn() == j)
-                                g.drawString("" + enemyList.get(k).getHP(),j*cellSize + 15,i*cellSize + 35);
+                            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 20));
+                            //find which enemy and print their current HP
+                            for(int k = 0; k < enemyList.size(); k ++)
+                            {
+                                if(enemyList.get(k).getRow() == i && enemyList.get(k).getColumn() == j)
+                                    g.drawString("" + enemyList.get(k).getHP(),j*cellSize + 15,i*cellSize + 35);
+                            }
                         }
                     }
                 }
+                //gridlines that will be commented out at the end
+                g.setColor(new Color(25,25,25));
+                for(int i=0;i<=gridSize;i++)
+                {
+                    g.drawLine(0,i*cellSize,gridSize*cellSize,i*cellSize);
+                }
+                for(int i=0;i<=gridSize;i++)
+                {
+                    g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
+                }
+                //projectiles
+                for(int i = 0; i < projectileList.size(); i++)
+                {
+                    Projectile p = projectileList.get(i);
+                    g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
+                }
+                for(int i = 0; i < enemyProjectileList.size(); i++)
+                {
+                    Projectile p = enemyProjectileList.get(i);
+                    g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
+                }
+                //player
+                g.drawImage(playerBI,playerX,playerY,null);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 15));
+                //player HP
+                g.drawString("" + playerHP, playerX+6, playerY+20);
+
+                //draw level on screen
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 30));
+                g.drawString("Level: " + (currLevel + 1),395,35);     
             }
-            //gridlines that will be commented out at the end
-            g.setColor(new Color(25,25,25));
-            for(int i=0;i<=gridSize;i++)
-            {
-                g.drawLine(0,i*cellSize,gridSize*cellSize,i*cellSize);
-            }
-            for(int i=0;i<=gridSize;i++)
-            {
-                g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
-            }
-            //projectiles
-            for(int i = 0; i < projectileList.size(); i++)
-            {
-                Projectile p = projectileList.get(i);
-                g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
-            }
-            for(int i = 0; i < enemyProjectileList.size(); i++)
-            {
-                Projectile p = enemyProjectileList.get(i);
-                g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
-            }
-            //player
-            g.drawImage(playerBI,playerX,playerY,null);
-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 15));
-            g.drawString("" + playerHP, playerX+6, playerY+20);
         }
     }
     private class GameThread extends Thread
@@ -314,7 +390,7 @@ public class Game extends JFrame
         {
             try
             {
-                while(running)
+                while(running && view == PLAYING)
                 {
                     sleep(15);
                     wait++;
@@ -397,12 +473,12 @@ public class Game extends JFrame
                     {
                         levelComplete = true;
                         createLevel();
-                        currLevel++;
                     }
+                    //if play has no HP, lose
                     if (playerHP <= 0)
                     {
                         running = false;
-                        JOptionPane.showMessageDialog(null,"Game Over!\nYou Lose!", "Loser!", JOptionPane.INFORMATION_MESSAGE);
+                        view = LOSER;
                         resetGame();
                     }
                     gamePanel.repaint();
@@ -418,84 +494,138 @@ public class Game extends JFrame
     {
         public void keyPressed(KeyEvent e)
         {
-            //WASD movement or arrow keys
-            //set boolean variables for direction
-            if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+            //Main menu keys
+            if(view == MAIN)
             {
-                playerMoving = true;
-                playerUp = true;
-            }
-            else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
-            {
-                playerMoving = true;
-                playerDown = true;
-            }
-            else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
-            {
-                playerMoving = true;
-                playerLeft = true;
-            }
-            else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
-            {
-                playerMoving = true;
-                playerRight = true;
-            }
-            //shoot projectiles
-            if(e.getKeyCode()==KeyEvent.VK_SPACE && gameGrid[playerY/cellSize][playerX/cellSize] != START)
-            {
-                synchronized(projectileList)
+                if(e.getKeyCode()==KeyEvent.VK_P)
                 {
-                    //default direction of shooting to where the player was last moving
-                    if(!playerMoving && !shooting)
-                    {
-                        boolean[] a = new boolean [4];
-                        a[lastDir] = true;
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 10,a[0],
-                            a[1],a[2],a[3]));
-                        shooting = true;
-                    }
-                    //shoot to the direction the player is moving
-                    else if(!shooting)
-                    {
-                        projectileList.add(new Projectile(playerX+10, playerY+10, 10,playerUp,
-                            playerDown,playerLeft,playerRight));
-                        shooting = true;
-                    }
+                    view = PLAYING;
+                    gamePanel.repaint();
+                    running = true;
+                    new GameThread().start();
                 }
+                else if(e.getKeyCode()==KeyEvent.VK_R)
+                {
+                    view = RULES;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_H)
+                {
+                    view = HIGHSCORE;
+                    gamePanel.repaint();
+                }
+            }
+            //Rules and highscore keys
+            else if(view == RULES || view == HIGHSCORE)
+            {
+                if(e.getKeyCode()==KeyEvent.VK_B)
+                {
+                    view = MAIN;
+                    gamePanel.repaint();
+                }
+            }
+            //loser and winner keys   
+            else if(view == LOSER || view == WINNER)
+            {
+                if(e.getKeyCode()==KeyEvent.VK_R)
+                {
+                    view = PLAYING;
+                    gamePanel.repaint();
+                    running = true;
+                    new GameThread().start();
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_M)
+                {
+                    view = MAIN;
+                    gamePanel.repaint();
+                }
+            }
+            //Play keys         
+            else if(view == PLAYING)
+            {
+                //WASD movement or arrow keys
+                //set boolean variables for direction
+                if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+                {
+                    playerMoving = true;
+                    playerUp = true;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
+                {
+                    playerMoving = true;
+                    playerDown = true;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
+                {
+                    playerMoving = true;
+                    playerLeft = true;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
+                {
+                    playerMoving = true;
+                    playerRight = true;
+                }
+                //shoot projectiles
+                if(e.getKeyCode()==KeyEvent.VK_SPACE && gameGrid[playerY/cellSize][playerX/cellSize] != START)
+                {
+                    synchronized(projectileList)
+                    {
+                        //default direction of shooting to where the player was last moving
+                        if(!playerMoving && !shooting)
+                        {
+                            boolean[] a = new boolean [4];
+                            a[lastDir] = true;
+                            projectileList.add(new Projectile(playerX+10, playerY+10, 10,a[0],
+                                a[1],a[2],a[3]));
+                            shooting = true;
+                        }
+                        //shoot to the direction the player is moving
+                        else if(!shooting)
+                        {
+                            projectileList.add(new Projectile(playerX+10, playerY+10, 10,playerUp,
+                                playerDown,playerLeft,playerRight));
+                            shooting = true;
+                        }
+                    }
+                }                
             }
         }
         public void keyReleased(KeyEvent e)
         {
-            //reset the boolean variables and keep track of last direction
-            if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+            //only if playing
+            if(view == PLAYING)
             {
-                playerUp = false;
-                if(!playerDown && !playerLeft && !playerRight)
-                    lastDir = 0;
+                //reset the boolean variables and keep track of last direction
+                if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+                {
+                    playerUp = false;
+                    if(!playerDown && !playerLeft && !playerRight)
+                        lastDir = 0;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
+                {
+                    playerDown = false;
+                    if(!playerUp && !playerLeft && !playerRight)
+                        lastDir = 1;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
+                {
+                    playerLeft = false;
+                    if(!playerDown && !playerUp && !playerRight)
+                        lastDir = 2;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
+                {
+                    playerRight = false;
+                    if(!playerDown && !playerLeft && !playerUp)
+                        lastDir = 3;
+                }
+                if(!playerUp && !playerDown && !playerLeft && !playerRight)
+                    playerMoving = false;
+                //set shooting false to prevent spam shooting
+                if(e.getKeyCode()==KeyEvent.VK_SPACE)
+                    shooting = false;
             }
-            else if(e.getKeyCode()==KeyEvent.VK_S || e.getKeyCode() == KeyEvent.VK_DOWN)
-            {
-                playerDown = false;
-                if(!playerUp && !playerLeft && !playerRight)
-                    lastDir = 1;
-            }
-            else if(e.getKeyCode()==KeyEvent.VK_A || e.getKeyCode() == KeyEvent.VK_LEFT)
-            {
-                playerLeft = false;
-                if(!playerDown && !playerUp && !playerRight)
-                    lastDir = 2;
-            }
-            else if(e.getKeyCode()==KeyEvent.VK_D || e.getKeyCode() == KeyEvent.VK_RIGHT)
-            {
-                playerRight = false;
-                if(!playerDown && !playerLeft && !playerUp)
-                    lastDir = 3;
-            }
-            if(!playerUp && !playerDown && !playerLeft && !playerRight)
-                playerMoving = false;
-            //set shooting false to prevent spam shooting
-            if(e.getKeyCode()==KeyEvent.VK_SPACE)
-                shooting = false;
         }
     }
     
