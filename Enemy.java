@@ -5,10 +5,10 @@ public class Enemy {
     private int hp;
     private int mode;
 
-    private static final int EASY = 0;
-    private static final int MEDIUM = 1;
-    private static final int HARD = 2;
-    private static final int BOSS = 3;
+    public static final int EASY = 0;
+    public static final int MEDIUM = 1;
+    public static final int HARD = 2;
+    public static final int BOSS = 3;
 
     public Enemy(int row, int column, int mode)
     {
@@ -33,7 +33,7 @@ public class Enemy {
         }
         else if(mode == BOSS)
         {
-
+            hp = 50;
         }
     }
     public int getRow()

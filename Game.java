@@ -90,7 +90,7 @@ public class Game extends JFrame
         bia = new BufferedImage[6]; 
 
         //array for the level files
-        levels = new String[2];
+        levels = new String[4];
         for (int i = 0; i < levels.length; i++)
         {
             levels[i] = "game" + (i+1) + ".txt";
@@ -170,9 +170,18 @@ public class Game extends JFrame
                     //if ENEMY square create an enemy object
                     if(Integer.parseInt(sa[j]) == ENEMY && !levelComplete)
                     {
+                        //set difficulty based on level
+                        int difficulty = Enemy.EASY;
+                        if(currLevel + 1 > 3 && currLevel + 1 < 7)
+                            difficulty = Enemy.MEDIUM;
+                        else if(currLevel + 1 > 6 && currLevel + 1 < 10)
+                            difficulty = Enemy.HARD;
+                        else if(currLevel + 1 == 10)
+                            difficulty = Enemy.BOSS;
+    
                         synchronized(enemyList)
                         {
-                            Enemy e = new Enemy(i,j, 0);
+                            Enemy e = new Enemy(i,j, difficulty);
                             enemyList.add(e);
                         }
 
@@ -397,6 +406,7 @@ public class Game extends JFrame
                     //move the player
                     nextStep();
 
+                    //enemies shoot every 1.02 seconds
                     if(wait % 70 == 0)
                     {
                         for(int i = 0; i < enemyList.size(); i++)
@@ -440,7 +450,7 @@ public class Game extends JFrame
                             if(gameGrid[(p.getY()+5)/cellSize][p.getX()/cellSize] != NONE && 
                                 gameGrid[(p.getY()+5)/cellSize][p.getX()/cellSize] != ENEMY)
                                 p.move();
-                            //if its and enemy
+                            //if its an enemy
                             else if(gameGrid[(p.getY()+5)/cellSize][p.getX()/cellSize] == ENEMY)
                             {
                                 projectileList.remove(i);
@@ -449,14 +459,14 @@ public class Game extends JFrame
                                 {
                                     for(int j = enemyList.size() - 1; j >= 0;j--)
                                     {
-                                        if(p.getY()/cellSize == enemyList.get(j).getRow() && 
+                                        if((p.getY()+5)/cellSize == enemyList.get(j).getRow() && 
                                             p.getX()/cellSize == enemyList.get(j).getColumn())
                                         {
                                             //decrement the hp and if its at 0 it is dead and turns to PATH
                                             enemyList.get(j).decrementHP();
                                             if(enemyList.get(j).getHP() == 0)
                                             {
-                                                gameGrid[p.getY()/cellSize][p.getX()/cellSize] = PATH;
+                                                gameGrid[(p.getY()+5)/cellSize][p.getX()/cellSize] = PATH;
                                                 enemyList.remove(j);
                                             }
                                         }
@@ -472,6 +482,8 @@ public class Game extends JFrame
                     if (enemyList.isEmpty() && !levelComplete)
                     {
                         levelComplete = true;
+                        projectileList.clear();
+                        enemyProjectileList.clear();
                         createLevel();
                     }
                     //if play has no HP, lose
