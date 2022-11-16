@@ -15,6 +15,7 @@ public class Game extends JFrame
     private static final int HIGHSCORE = 3;
     private static final int WINNER = 4;
     private static final int LOSER = 5;
+    private static final int LEVELSELECT = 6;
     private int view = 0;
 
     //gamePanel and bia for the grid
@@ -78,7 +79,7 @@ public class Game extends JFrame
 
     public Game()
     {
-        super("Game");
+        super("Shoot & Scoot");
 
         KeyHandler kh = new KeyHandler();
         toolkit=getToolkit();
@@ -123,8 +124,6 @@ public class Game extends JFrame
         {
             System.out.println(ioe);
         }
-        //creates starting level
-        createLevel();
 
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -137,13 +136,23 @@ public class Game extends JFrame
     private void resetGame()
     {
         //reset all variables
-        currLevel = 0; playerHP = 10; lives = 3;
+        currLevel = 0; playerHP = 10; lives = 3; gold = 0;
         levelComplete = false;
         playerUp = false; playerDown = false; playerLeft = false; playerRight = false; 
-        lastDir = 0; playerMoving = false;
+        lastDir = 0; playerMoving = false; tripleP = false;
         projectileList.clear(); enemyList.clear(); enemyProjectileList.clear();
         createLevel();
         running = true;
+    }
+    //called by level selection
+    private void levelSelect()
+    {
+        view = PLAYING;
+        running = true;
+        enemyList.clear();
+        createLevel();
+        gamePanel.repaint();
+        new GameThread().start();
     }
     //creates each level
     private void createLevel()
@@ -316,9 +325,10 @@ public class Game extends JFrame
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 100));
                 g.drawString("Shoot & Scoot",100,100);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
-                g.drawString("Press P to play",250,300);
-                g.drawString("Press R to bring up the rules",100,400);
-                g.drawString("Press H to bring up the highscores",30,500);
+                g.drawString("Press P to play",275,300);
+                g.drawString("Press R for the rules",200,400);
+                g.drawString("Press H for the highscores",135,500);
+                g.drawString("Press L for the Level Selection",90,600);
             }
             //Rules view
             else if(view == RULES)
@@ -343,6 +353,19 @@ public class Game extends JFrame
                 g.setColor(Color.WHITE);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
                 g.drawString("Highscores",250,100);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
+                g.drawString("Press B to go back to main menu",50,700);
+            }
+            //level selction view
+            else if(view == LEVELSELECT)
+            {
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
+                g.drawString("Levels",330,100);
+                g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
+                g.drawString("Press the number key of the level to go to",200,150);
+                for(int i = 0; i < levels.length; i++)
+                    g.drawString("Level " + (i + 1), 400, 200 + (i*50));
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
                 g.drawString("Press B to go back to main menu",50,700);
             }
@@ -443,10 +466,11 @@ public class Game extends JFrame
                         for(int i = 0; i < enemyList.size(); i++)
                         {
                             Enemy e = enemyList.get(i);
-                            Projectile p = new Projectile((float)e.getColumn()*cellSize+25,(float)e.getRow()*cellSize+25, (float)playerX, (float)playerY);
+                            Projectile p = new Projectile((float)e.getColumn()*cellSize+25,(float)e.getRow()*cellSize+25, (float)playerX + 10, (float)playerY + 10);
                             enemyProjectileList.add(p);
                         }
                     }
+                    //Enemy projectile movement 
                     for(int i = 0; i < enemyProjectileList.size(); i++)
                     {
                         Projectile p = enemyProjectileList.get(i);
@@ -454,6 +478,7 @@ public class Game extends JFrame
                         p.setY((int)(p.getStartY() + p.getStep() * p.getDeltaY()));
                         p.setStep(p.getStep() + 1);
                     }
+                    //Remove if hitting something
                     for(int i = enemyProjectileList.size() - 1; i >= 0; i--)
                     {
                         Projectile p = enemyProjectileList.get(i);
@@ -549,6 +574,7 @@ public class Game extends JFrame
                 if(e.getKeyCode()==KeyEvent.VK_P)
                 {
                     view = PLAYING;
+                    createLevel();
                     gamePanel.repaint();
                     running = true;
                     new GameThread().start();
@@ -561,6 +587,43 @@ public class Game extends JFrame
                 else if(e.getKeyCode()==KeyEvent.VK_H)
                 {
                     view = HIGHSCORE;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_L)
+                {
+                    view = LEVELSELECT;
+                    gamePanel.repaint();
+                }
+            }
+            //level selection keys
+            else if(view == LEVELSELECT)
+            {
+                switch(e.getKeyCode())
+                {
+                    case KeyEvent.VK_1:
+                        currLevel = 0;
+                        levelSelect();
+                        break;
+                    case KeyEvent.VK_2:
+                        currLevel = 1;
+                        levelSelect();
+                        break;
+                    case KeyEvent.VK_3:
+                        currLevel = 2;
+                        levelSelect();
+                        break;
+                    case KeyEvent.VK_4:
+                        currLevel = 3;
+                        levelSelect();
+                        break;
+                    case KeyEvent.VK_5:
+                        currLevel = 4;
+                        levelSelect();
+                        break;
+                }
+                if(e.getKeyCode()==KeyEvent.VK_B)
+                {
+                    view = MAIN;
                     gamePanel.repaint();
                 }
             }
