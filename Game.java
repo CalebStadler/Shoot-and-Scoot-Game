@@ -65,6 +65,10 @@ public class Game extends JFrame
     //variable for the running of the game thread
     private boolean running = false;
 
+    //variable for time
+    private String time = "";
+    private int timeScore = 0;
+
     //variables needed for the projectiles
     private BufferedImage[] projectileBIA;
     private ArrayList<Projectile> projectileList;
@@ -76,6 +80,14 @@ public class Game extends JFrame
 
     //variables for gold
     private int gold = 0;
+
+    //variables for total score
+    private int score = 0;
+    private int hpDealtScore = 0;
+    private int enemiesKilled = 0;
+    private int complete = 0;
+    private File highScores;
+    private int[] highScoreA = new int[10];
 
     public Game()
     {
@@ -119,11 +131,14 @@ public class Game extends JFrame
         {
             playerBI = ImageIO.read(new File("Images/player.png"));
             projectileBIA[SMALL] = ImageIO.read(new File("Images/smallBall.png"));
+            highScores = new File("scores.txt");
         }
         catch(IOException ioe)
         {
             System.out.println(ioe);
         }
+
+        takeInHighScores();
 
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -136,7 +151,8 @@ public class Game extends JFrame
     private void resetGame()
     {
         //reset all variables
-        currLevel = 0; playerHP = 10; lives = 3; gold = 0;
+        currLevel = 0; playerHP = 10; lives = 3; gold = 0; 
+        hpDealtScore = 0; timeScore= 0; enemiesKilled = 0; complete = 0;
         levelComplete = false;
         playerUp = false; playerDown = false; playerLeft = false; playerRight = false; 
         lastDir = 0; playerMoving = false; tripleP = false;
@@ -153,6 +169,60 @@ public class Game extends JFrame
         createLevel();
         gamePanel.repaint();
         new GameThread().start();
+        new TimerThread().start();
+    }
+    private void calcScore()
+    {
+        score = (lives*2000) + (playerHP*100) + hpDealtScore + (enemiesKilled*100) -
+            timeScore + (gold*100) + (currLevel * 1000) + complete;
+        if(score < 0 )
+            score = 0;
+    }
+    private void takeInHighScores()
+    {
+        try
+        {
+            Scanner in = new Scanner(highScores);
+            int i = 0;
+            while(in.hasNextInt())
+            {
+                highScoreA[i] = in.nextInt();
+                i++;                
+            }
+            Arrays.sort(highScoreA);
+            in.close();
+        }
+        catch(IOException ioe)
+        {
+            System.out.println(ioe);
+        }
+    }
+    private void addToHighScores()
+    {
+        int min = highScoreA[0];
+        int minIndex = 0;
+        try
+        {
+            PrintWriter out = new PrintWriter(highScores);
+            for(int i = 1; i < highScoreA.length; i++)
+            {
+                if(highScoreA[i] < min)
+                {
+                    min = highScoreA[i];
+                    minIndex = i;
+                }
+            }
+            if(score > min)
+                highScoreA[minIndex] = score;
+            Arrays.sort(highScoreA);
+            for (int i = 0; i < highScoreA.length; i++)
+                out.println(highScoreA[i]);
+            out.close();
+        }
+        catch(IOException ioe)
+        {
+            System.out.println(ioe);
+        }
     }
     //creates each level
     private void createLevel()
@@ -289,6 +359,9 @@ public class Game extends JFrame
                 {
                     running = false;
                     view = WINNER;
+                    complete = 5000;
+                    calcScore();
+                    addToHighScores();
                     resetGame();
                 }
                 //else move to next level
@@ -354,6 +427,10 @@ public class Game extends JFrame
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
                 g.drawString("Highscores",250,100);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
+                for(int i = 0; i < highScoreA.length; i++)
+                {
+                    g.drawString("" + highScoreA[i],380,125 + (highScoreA.length - i) * 50);
+                }
                 g.drawString("Press B to go back to main menu",50,700);
             }
             //level selction view
@@ -372,12 +449,15 @@ public class Game extends JFrame
             //Winner view
             else if(view == WINNER)
             {
-                g.setColor(Color.RED);
+                g.setColor(Color.GREEN);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
                 g.drawString("WINNER",290,450);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
-                g.drawString("Press R to restart",325,500);
-                g.drawString("Press M for main menu",300,550);
+                g.drawString("Score: " + score,350,500);
+                score = 0;
+                g.drawString(time,370,550);
+                g.drawString("Press R to restart",325,600);
+                g.drawString("Press M for main menu",300,650);
             }
             //Loser view
             else if (view == LOSER)
@@ -386,8 +466,11 @@ public class Game extends JFrame
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
                 g.drawString("YOU ARE DEAD",165,450);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
-                g.drawString("Press R to restart",325,500);
-                g.drawString("Press M for main menu",300,550);
+                g.drawString("Score: " + score,350,500);
+                score = 0;
+                g.drawString(time,370,550);
+                g.drawString("Press R to restart",325,600);
+                g.drawString("Press M for main menu",300,650);
             }
             //Play view
             else if(view == PLAYING)
@@ -412,6 +495,7 @@ public class Game extends JFrame
                     }
                 }
                 //gridlines that will be commented out at the end
+                /*
                 g.setColor(new Color(25,25,25));
                 for(int i=0;i<=gridSize;i++)
                 {
@@ -421,6 +505,7 @@ public class Game extends JFrame
                 {
                     g.drawLine(i*cellSize,0,i*cellSize,gridSize*cellSize);
                 }
+                */
                 //projectiles
                 for(int i = 0; i < projectileList.size(); i++)
                 {
@@ -441,9 +526,10 @@ public class Game extends JFrame
                 //draw level on screen and number of lives left
                 g.setColor(Color.WHITE);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 30));
-                g.drawString("Level: " + (currLevel + 1),330,35);  
-                g.drawString("Lives: " + lives,470,35);   
-                g.drawString("Gold: " + gold, 610,35);  
+                g.drawString("Level: " + (currLevel + 1),170,35);  
+                g.drawString(time,300,35);
+                g.drawString("Lives: " + lives,490,35);   
+                g.drawString("Gold: " + gold, 630,35);  
             }
         }
     }
@@ -520,10 +606,16 @@ public class Game extends JFrame
                                         {
                                             //decrement the hp and if its at 0 it is dead and turns to PATH
                                             enemyList.get(j).decrementHP();
+                                            if(tripleP)
+                                                hpDealtScore += 10;
+                                            else
+                                                hpDealtScore += 15;
+                                            
                                             if(enemyList.get(j).getHP() == 0)
                                             {
                                                 gameGrid[(p.getY()+5)/cellSize][p.getX()/cellSize] = PATH;
                                                 enemyList.remove(j);
+                                                enemiesKilled++;
                                             }
                                         }
                                     }
@@ -542,7 +634,7 @@ public class Game extends JFrame
                         enemyProjectileList.clear();
                         createLevel();
                     }
-                    //if play has no HP, lose
+                    //if play has no HP and no lives, lose
                     if (playerHP <= 0)
                     {
                         lives--;
@@ -550,6 +642,8 @@ public class Game extends JFrame
                         {
                             running = false;
                             view = LOSER;
+                            calcScore();
+                            addToHighScores();
                             resetGame();
                         }
                         else 
@@ -557,6 +651,30 @@ public class Game extends JFrame
                     }
                     gamePanel.repaint();
                     toolkit.sync();
+                }
+            }
+            catch(InterruptedException ie)
+            {}
+        }
+    }
+
+    private class TimerThread extends Thread
+    {
+        public void run()
+        {
+            long base=System.currentTimeMillis();
+            try
+            {
+                while(running && view == PLAYING)
+                {
+                    sleep(15);
+                    long curr=System.currentTimeMillis();
+                    int delt=(int)(curr-base)/100;
+                    int mins=(int)(delt/600);
+                    int secs=(int)((delt/10)%60);
+                    time = "Time: "+String.format("%3d:%02d"
+                           ,mins,secs);
+                    timeScore = mins * 120 + secs * 2;
                 }
             }
             catch(InterruptedException ie)
@@ -578,6 +696,7 @@ public class Game extends JFrame
                     gamePanel.repaint();
                     running = true;
                     new GameThread().start();
+                    new TimerThread().start();
                 }
                 else if(e.getKeyCode()==KeyEvent.VK_R)
                 {
@@ -587,6 +706,7 @@ public class Game extends JFrame
                 else if(e.getKeyCode()==KeyEvent.VK_H)
                 {
                     view = HIGHSCORE;
+                    takeInHighScores();
                     gamePanel.repaint();
                 }
                 else if(e.getKeyCode()==KeyEvent.VK_L)
@@ -645,6 +765,7 @@ public class Game extends JFrame
                     gamePanel.repaint();
                     running = true;
                     new GameThread().start();
+                    new TimerThread().start();
                 }
                 else if(e.getKeyCode()==KeyEvent.VK_M)
                 {
