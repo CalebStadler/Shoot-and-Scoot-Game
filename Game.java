@@ -73,7 +73,8 @@ public class Game extends JFrame
     private BufferedImage[] projectileBIA;
     private ArrayList<Projectile> projectileList;
     private boolean shooting = false;
-    private static final int SMALL=1;
+    private static final int SMALL=0;
+    private static final int BIG=1;
 
     //variables for powerups
     private boolean tripleP = false;
@@ -112,7 +113,7 @@ public class Game extends JFrame
         bia = new BufferedImage[8]; 
 
         //array for the level files
-        levels = new String[5];
+        levels = new String[10];
         for (int i = 0; i < levels.length; i++)
         {
             levels[i] = "Levels/game" + (i+1) + ".txt";
@@ -120,7 +121,7 @@ public class Game extends JFrame
         
         //creation of projectile list and buffered image array
         projectileList = new ArrayList<Projectile>();
-        projectileBIA = new BufferedImage[4];
+        projectileBIA = new BufferedImage[2];
         
         //creation of enemy list
         enemyList = new ArrayList<Enemy>();
@@ -131,6 +132,7 @@ public class Game extends JFrame
         {
             playerBI = ImageIO.read(new File("Images/player.png"));
             projectileBIA[SMALL] = ImageIO.read(new File("Images/smallBall.png"));
+            projectileBIA[BIG] = ImageIO.read(new File("Images/bigBall.png"));
             highScores = new File("scores.txt");
         }
         catch(IOException ioe)
@@ -440,9 +442,10 @@ public class Game extends JFrame
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 75));
                 g.drawString("Levels",330,100);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
-                g.drawString("Press the number key of the level to go to",200,150);
+                g.drawString("Use arrow keys to move to desired level",200,150);
                 for(int i = 0; i < levels.length; i++)
                     g.drawString("Level " + (i + 1), 400, 200 + (i*50));
+                g.drawRect(395,175 + (currLevel * 50),110,30);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
                 g.drawString("Press B to go back to main menu",50,700);
             }
@@ -515,7 +518,10 @@ public class Game extends JFrame
                 for(int i = 0; i < enemyProjectileList.size(); i++)
                 {
                     Projectile p = enemyProjectileList.get(i);
-                    g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
+                    if(currLevel+1 == 10)
+                        g.drawImage(projectileBIA[BIG],p.getX(),p.getY(),null);
+                    else
+                        g.drawImage(projectileBIA[SMALL],p.getX(),p.getY(),null);
                 }
                 //player
                 g.drawImage(playerBI,playerX,playerY,null);
@@ -554,6 +560,29 @@ public class Game extends JFrame
                             Enemy e = enemyList.get(i);
                             Projectile p = new Projectile((float)e.getColumn()*cellSize+25,(float)e.getRow()*cellSize+25, (float)playerX + 10, (float)playerY + 10);
                             enemyProjectileList.add(p);
+                            if(e.getMode() == Enemy.BOSS)
+                            {
+                                gameGrid[e.getRow()][e.getColumn()] = PATH;
+                                e.setColumn(e.getColumn() + e.getBossDirX());
+                                e.setRow(e.getRow() + e.getBossDirY());
+                                gameGrid[e.getRow()][e.getColumn()] = ENEMY;
+                                if(gameGrid[e.getRow() + e.getBossDirY()][e.getColumn()] == NONE ||
+                                gameGrid[e.getRow() + e.getBossDirY()][e.getColumn()] == GOLD ||
+                                gameGrid[e.getRow() + e.getBossDirY()][e.getColumn()] == WATER ||
+                                gameGrid[e.getRow() + e.getBossDirY()][e.getColumn()] == START || 
+                                gameGrid[e.getRow() + e.getBossDirY()][e.getColumn()] == ENEMY)
+                                {
+                                    e.setBossDirY(e.getBossDirY() * -1);
+                                }
+                                if(gameGrid[e.getRow()][e.getColumn() + e.getBossDirX()] == NONE ||
+                                gameGrid[e.getRow()][e.getColumn() + e.getBossDirX()] == GOLD ||
+                                gameGrid[e.getRow()][e.getColumn() + e.getBossDirX()] == WATER ||
+                                gameGrid[e.getRow()][e.getColumn() + e.getBossDirX()] == START ||
+                                gameGrid[e.getRow()][e.getColumn() + e.getBossDirX()] == ENEMY)
+                                {
+                                    e.setBossDirX(e.getBossDirX() * -1);
+                                }
+                            }
                         }
                     }
                     //Enemy projectile movement 
@@ -573,7 +602,17 @@ public class Game extends JFrame
                         {
                             enemyProjectileList.remove(i);
                         }
-                        if(p.getY() >= playerY && p.getY() <= playerY + 30 && p.getX() >= playerX && p.getX() <= playerX + 30)
+                        if(currLevel + 1 == 10)
+                        {
+                            if((p.getY() >= playerY && p.getY() <= playerY + 30 && p.getX() >= playerX && p.getX() <= playerX + 30) ||
+                            (p.getY() + 20 >= playerY && p.getY() + 20 <= playerY + 30 && p.getX() >= playerX && p.getX() <= playerX + 30) ||
+                            (p.getY() >= playerY && p.getY() <= playerY + 30 && p.getX() + 20 >= playerX && p.getX() + 20 <= playerX + 30))
+                            {
+                                enemyProjectileList.remove(i);
+                                playerHP--;
+                            }
+                        }
+                        else if(p.getY() >= playerY && p.getY() <= playerY + 30 && p.getX() >= playerX && p.getX() <= playerX + 30)
                         {
                             enemyProjectileList.remove(i);
                             playerHP--;
@@ -712,38 +751,33 @@ public class Game extends JFrame
                 else if(e.getKeyCode()==KeyEvent.VK_L)
                 {
                     view = LEVELSELECT;
+                    currLevel = 0;
                     gamePanel.repaint();
                 }
             }
             //level selection keys
             else if(view == LEVELSELECT)
             {
-                switch(e.getKeyCode())
+                if(e.getKeyCode() == KeyEvent.VK_UP)
                 {
-                    case KeyEvent.VK_1:
-                        currLevel = 0;
-                        levelSelect();
-                        break;
-                    case KeyEvent.VK_2:
-                        currLevel = 1;
-                        levelSelect();
-                        break;
-                    case KeyEvent.VK_3:
-                        currLevel = 2;
-                        levelSelect();
-                        break;
-                    case KeyEvent.VK_4:
-                        currLevel = 3;
-                        levelSelect();
-                        break;
-                    case KeyEvent.VK_5:
-                        currLevel = 4;
-                        levelSelect();
-                        break;
+                    if(currLevel > 0)
+                        currLevel--;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_DOWN)
+                {
+                    if(currLevel < 9)
+                        currLevel++;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_ENTER)
+                {
+                    levelSelect();
                 }
                 if(e.getKeyCode()==KeyEvent.VK_B)
                 {
                     view = MAIN;
+                    currLevel = 0;
                     gamePanel.repaint();
                 }
             }
@@ -797,6 +831,11 @@ public class Game extends JFrame
                 {
                     playerMoving = true;
                     playerRight = true;
+                }
+                else if(e.getKeyCode()==KeyEvent.VK_B)
+                {
+                    view = MAIN;
+                    gamePanel.repaint();
                 }
                 //shoot projectiles
                 if(e.getKeyCode()==KeyEvent.VK_SPACE && gameGrid[playerY/cellSize][playerX/cellSize] != START)
