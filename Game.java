@@ -17,6 +17,7 @@ public class Game extends JFrame
     private static final int LOSER = 5;
     private static final int LEVELSELECT = 6;
     private int view = 0;
+    private int selection = 0;
 
     //gamePanel and bia for the grid
     private GamePanel gamePanel;
@@ -398,12 +399,21 @@ public class Game extends JFrame
             {
                 g.setColor(Color.WHITE);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 100));
-                g.drawString("Shoot & Scoot",100,100);
+                g.drawString("Shoot & Scoot",100,150);
                 g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 50));
-                g.drawString("Press P to play",275,300);
-                g.drawString("Press R for the rules",200,400);
-                g.drawString("Press H for the highscores",135,500);
-                g.drawString("Press L for the Level Selection",90,600);
+                g.drawString("Play",400,300);
+                g.drawString("Rules",380,400);
+                g.drawString("Highscores",325,500);
+                g.drawString("Level Selection",280,600);
+                if(selection == 0)
+                    g.drawRect(395,255,110,60);
+                if(selection == 1)
+                    g.drawRect(375,355,145,60);
+                if(selection == 2)
+                    g.drawRect(320,455,285,60);
+                if(selection == 3)
+                    g.drawRect(275,555,375,60);
+                
             }
             //Rules view
             else if(view == RULES)
@@ -728,31 +738,46 @@ public class Game extends JFrame
             //Main menu keys
             if(view == MAIN)
             {
-                if(e.getKeyCode()==KeyEvent.VK_P)
+                if(e.getKeyCode() == KeyEvent.VK_UP)
                 {
-                    view = PLAYING;
-                    createLevel();
-                    gamePanel.repaint();
-                    running = true;
-                    new GameThread().start();
-                    new TimerThread().start();
-                }
-                else if(e.getKeyCode()==KeyEvent.VK_R)
-                {
-                    view = RULES;
+                    if(selection > 0)
+                        selection--;
                     gamePanel.repaint();
                 }
-                else if(e.getKeyCode()==KeyEvent.VK_H)
+                else if(e.getKeyCode() == KeyEvent.VK_DOWN)
                 {
-                    view = HIGHSCORE;
-                    takeInHighScores();
+                    if(selection < 3)
+                        selection++;
                     gamePanel.repaint();
                 }
-                else if(e.getKeyCode()==KeyEvent.VK_L)
+                else if(e.getKeyCode() == KeyEvent.VK_ENTER)
                 {
-                    view = LEVELSELECT;
-                    currLevel = 0;
-                    gamePanel.repaint();
+                    if(selection == 0)
+                    {
+                        view = PLAYING;
+                        createLevel();
+                        gamePanel.repaint();
+                        running = true;
+                        new GameThread().start();
+                        new TimerThread().start();
+                    }
+                    else if(selection == 1)
+                    {
+                        view = RULES;
+                        gamePanel.repaint();
+                    }
+                    else if(selection == 2)
+                    {
+                        view = HIGHSCORE;
+                        takeInHighScores();
+                        gamePanel.repaint();
+                    }
+                    else if(selection == 3)
+                    {
+                        view = LEVELSELECT;
+                        currLevel = 0;
+                        gamePanel.repaint();
+                    }
                 }
             }
             //level selection keys
@@ -835,6 +860,8 @@ public class Game extends JFrame
                 else if(e.getKeyCode()==KeyEvent.VK_B)
                 {
                     view = MAIN;
+                    running = false;
+                    resetGame();
                     gamePanel.repaint();
                 }
                 //shoot projectiles
