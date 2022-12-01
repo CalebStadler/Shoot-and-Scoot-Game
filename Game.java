@@ -18,6 +18,7 @@ public class Game extends JFrame
     private static final int LEVELSELECT = 6;
     private int view = 0;
     private int selection = 0;
+    private boolean pause = false;
 
     //gamePanel and bia for the grid
     private GamePanel gamePanel;
@@ -181,6 +182,7 @@ public class Game extends JFrame
         if(score < 0 )
             score = 0;
     }
+    //takes scores in from the scores text file
     private void takeInHighScores()
     {
         try
@@ -200,6 +202,7 @@ public class Game extends JFrame
             System.out.println(ioe);
         }
     }
+    //add score to the highscore text file if it needs to be
     private void addToHighScores()
     {
         int min = highScoreA[0];
@@ -546,6 +549,19 @@ public class Game extends JFrame
                 g.drawString(time,300,35);
                 g.drawString("Lives: " + lives,490,35);   
                 g.drawString("Gold: " + gold, 630,35);  
+                if(pause == true)
+                {
+                    g.setColor(Color.BLACK);
+                    g.fillRect(365, 300, 175, 175);
+                    g.setColor(Color.WHITE);
+                    g.setFont(new Font(Font.SANS_SERIF,Font.BOLD, 25));
+                    g.drawString("Resume", 400,350);
+                    g.drawString("Quit", 420,420);
+                    if(selection == 0)
+                        g.drawRect(390, 320,120,50);
+                    if(selection == 1)
+                        g.drawRect(410,390,70,50);
+                }
             }
         }
     }
@@ -557,11 +573,17 @@ public class Game extends JFrame
             {
                 while(running && view == PLAYING)
                 {
+                    if(pause == true)
+                    {
+                        sleep(50);
+                        continue;
+                    }
                     sleep(15);
                     wait++;
                     //move the player
                     nextStep();
 
+                    //System.out.println(pause);
                     //enemies shoot every 1.02 seconds
                     if(wait % 70 == 0)
                     {
@@ -712,18 +734,32 @@ public class Game extends JFrame
         public void run()
         {
             long base=System.currentTimeMillis();
+            long startPauseTime = 0;
+            long endPauseTime = 0;
+            long totalPauseTime = 0;
             try
             {
                 while(running && view == PLAYING)
                 {
+                    if(pause == true)
+                    {
+                        if (startPauseTime == 0)
+                        {
+                            startPauseTime = System.currentTimeMillis();
+                        }
+                        sleep(50);
+                        endPauseTime = System.currentTimeMillis();
+                        continue;
+                    }
                     sleep(15);
-                    long curr=System.currentTimeMillis();
+                    totalPauseTime += endPauseTime - startPauseTime;
+                    long curr=System.currentTimeMillis() - totalPauseTime;
                     int delt=(int)(curr-base)/100;
                     int mins=(int)(delt/600);
                     int secs=(int)((delt/10)%60);
-                    time = "Time: "+String.format("%3d:%02d"
-                           ,mins,secs);
+                    time = "Time: "+String.format("%3d:%02d",mins,secs);
                     timeScore = mins * 120 + secs * 2;
+                    endPauseTime = 0; startPauseTime = 0;
                 }
             }
             catch(InterruptedException ie)
@@ -755,9 +791,10 @@ public class Game extends JFrame
                     if(selection == 0)
                     {
                         view = PLAYING;
+                        running = true;
+                        selection = 0;
                         createLevel();
                         gamePanel.repaint();
-                        running = true;
                         new GameThread().start();
                         new TimerThread().start();
                     }
@@ -829,15 +866,45 @@ public class Game extends JFrame
                 else if(e.getKeyCode()==KeyEvent.VK_M)
                 {
                     view = MAIN;
+                    running = false;
                     gamePanel.repaint();
                 }
             }
             //Play keys         
             else if(view == PLAYING)
             {
+                if(e.getKeyCode() == KeyEvent.VK_UP && pause)
+                {
+                    if(selection > 0)
+                        selection--;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_DOWN && pause)
+                {
+                    if(selection < 1)
+                        selection++;
+                    gamePanel.repaint();
+                }
+                else if(e.getKeyCode() == KeyEvent.VK_ENTER && pause)
+                {
+                    if(selection == 0)
+                    {
+                        pause = false;
+                        gamePanel.repaint();
+                    }
+                    if(selection == 1)
+                    {
+                        view = MAIN;
+                        running = false;
+                        pause = false;
+                        selection = 0;
+                        resetGame();
+                        gamePanel.repaint();
+                    }
+                }
                 //WASD movement or arrow keys
                 //set boolean variables for direction
-                if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
+                else if(e.getKeyCode()==KeyEvent.VK_W || e.getKeyCode() == KeyEvent.VK_UP)
                 {
                     playerMoving = true;
                     playerUp = true;
@@ -857,11 +924,13 @@ public class Game extends JFrame
                     playerMoving = true;
                     playerRight = true;
                 }
-                else if(e.getKeyCode()==KeyEvent.VK_B)
+                else if(e.getKeyCode()==KeyEvent.VK_ESCAPE)
                 {
-                    view = MAIN;
-                    running = false;
-                    resetGame();
+                    if(pause == true)
+                        pause = false;
+                    else
+                        pause = true;
+                    selection = 0;
                     gamePanel.repaint();
                 }
                 //shoot projectiles
